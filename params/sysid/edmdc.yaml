@@ -1,0 +1,34 @@
+# EDMDc fit configuration for Xplorer-mini.
+#
+# Lifted-state Koopman model: z_{k+1} = A z_k + B u_k, with z = psi(x) and
+# the first dim(x) components of psi(x) being x (so C = [I 0]).
+
+method: edmdc
+
+# Data discovery (see dmdc.yaml for the format).
+# Training data comes from the split produced by script/sysid/preprocess.py
+# (Step 4). Override only if you keep the split somewhere non-standard.
+# train_root: data/split/train
+
+scaler:
+  method: standard
+  args:
+    with_mean: true
+    with_std: true
+
+feature_selection:
+  state:
+    - [odom, twist]
+  input:
+    - [est_tau]
+  output:
+    - [odom, twist]
+
+# Lifting / observable.
+observable:
+  type: polynomial    # currently only polynomial is wired up
+  degree: 2
+  include_bias: false
+  interaction_only: false
+
+# Regression: ordinary least squares (the only method supported in this repo).
