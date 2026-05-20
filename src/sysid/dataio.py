@@ -13,6 +13,7 @@ Each trial CSV follows the rosbag2 export schema, with flat columns such as:
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Callable
 
@@ -21,6 +22,45 @@ import pandas as pd
 from scipy.spatial.transform import Rotation as R
 
 logger = logging.getLogger(__name__)
+
+
+# Vectors transform as v_NED = diag(1, -1, -1) @ v_NWU (rotation 180 deg
+# around the body x-axis flips y and z). Quaternions are NOT vectors and
+# are left untouched on disk: downstream consumers should use the Euler
+# columns added by inject_euler_angles (which this function flips for NED).
+_NED_VECTOR_FLIP_PATTERN = re.compile(
+    r"\.(position|linear|angular|force|torque)\.[yz]$"
+)
+_NED_EULER_FLIP_PATTERN = re.compile(
+    r"\.euler\.(pitch|yaw)$"
+)
+
+
+def to_ned(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert frame-dependent columns from NWU to NED in-place.
+
+    Two flip rules:
+    - Vector .y/.z components (position, linear, angular, force, torque):
+      negate. Standard NWU -> NED change of basis for vectors and angular
+      velocities (which transform like vectors under axis flips).
+    - Euler pitch/yaw: negate. Roll (rotation about x) is preserved.
+
+    Assumes inject_euler_angles has already been called so euler.{roll,
+    pitch,yaw} columns exist for every orientation group. Quaternion
+    columns are left as raw NWU on disk; downstream code should consume
+    the (now-NED) Euler columns instead.
+
+    Returns the same DataFrame for chaining.
+    """
+    vec = [c for c in df.columns if _NED_VECTOR_FLIP_PATTERN.search(c)]
+    for col in vec:
+        df[col] = -df[col]
+    eul = [c for c in df.columns if _NED_EULER_FLIP_PATTERN.search(c)]
+    for col in eul:
+        df[col] = -df[col]
+    logger.debug("NED: %d vector .y/.z and %d Euler pitch/yaw columns flipped",
+                 len(vec), len(eul))
+    return df
 
 
 def discover_trials(root: str | Path = "data/dataset") -> list[Path]:
@@ -63,6 +103,8 @@ def inject_euler_angles(df: pd.DataFrame) -> pd.DataFrame:
         ("odom", "odom_filtered.pose.pose.orientation.euler"),
     ]
     for prefix, out_prefix in targets:
+        if f"{out_prefix}.roll" in df.columns:
+            continue  # idempotent: skip if already injected
         try:
             quats = _extract_ordered_quat(df, prefix)
         except ValueError as e:
