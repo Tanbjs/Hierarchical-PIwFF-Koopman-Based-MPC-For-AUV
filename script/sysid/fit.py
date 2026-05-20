@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Sequence
 
+import joblib
 import numpy as np
 import pandas as pd
 import yaml
@@ -235,14 +236,7 @@ def train_edmdc(train: list[TrialFeatures], cfg: dict) -> tuple[EDMDc, dict]:
 def save_scaler(path: Path, scaler) -> None:
     if scaler is None:
         return
-    cls = scaler.__class__.__name__
-    if cls == "StandardScaler":
-        np.savez(path, kind="standard", mean=scaler.mean_, scale=scaler.scale_)
-    elif cls == "MinMaxScaler":
-        np.savez(path, kind="minmax", data_min=scaler.data_min_, data_max=scaler.data_max_,
-                 scale=scaler.scale_, min=scaler.min_)
-    else:
-        raise ValueError(f"Cannot persist scaler of type {cls}")
+    joblib.dump(scaler, path)
 
 
 def save_artifacts(
@@ -261,9 +255,9 @@ def save_artifacts(
     out_dir.mkdir(parents=True, exist_ok=True)
     np.save(out_dir / "A.npy", model.A)
     np.save(out_dir / "B.npy", model.B)
-    save_scaler(out_dir / "scaler_x.npz", scaler_x)
-    save_scaler(out_dir / "scaler_u.npz", scaler_u)
-    save_scaler(out_dir / "scaler_y.npz", scaler_y)
+    save_scaler(out_dir / "scaler_x.joblib", scaler_x)
+    save_scaler(out_dir / "scaler_u.joblib", scaler_u)
+    save_scaler(out_dir / "scaler_y.joblib", scaler_y)
 
     columns = {
         "state": state_col,
