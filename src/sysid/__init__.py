@@ -6,6 +6,7 @@ from .dataio import (
     load_dataset,
     load_trial,
     process_stage,
+    to_ned,
 )
 from .filters import (
     butterworth_lowpass,
@@ -31,6 +32,7 @@ __all__ = [
     "load_dataset",
     "inject_euler_angles",
     "process_stage",
+    "to_ned",
     "check_outliers_iqr",
     "hampel_filter",
     "moving_average",
