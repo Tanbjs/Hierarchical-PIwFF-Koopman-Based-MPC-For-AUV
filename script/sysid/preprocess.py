@@ -1,8 +1,10 @@
 """Preprocess: data/dataset -> raw -> cleaned -> smooth -> split.
 
-Step 1  dataset -> raw
-    Copy every trial CSV from data/dataset/ to data/raw/, preserving the
-    {depth}/{trial}/ folder layout and the original filename.
+Step 1  dataset -> raw  (NWU -> NED)
+    Read every trial CSV from data/dataset/, apply the NWU -> NED axis flip
+    (negate y, z components of position / velocity / force / torque /
+    quaternion columns), and write to data/raw/, preserving folder layout
+    and filename. All downstream stages operate in NED.
 
 Step 2  raw -> cleaned
     Apply the vectorized Hampel outlier filter to every CSV under data/raw/:
@@ -39,26 +41,42 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sysid import discover_trials, hampel_filter, moving_average, process_stage
+from sysid import (
+    discover_trials,
+    hampel_filter,
+    inject_euler_angles,
+    moving_average,
+    process_stage,
+    to_ned,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def copy_dataset_to_raw(src: Path, dst: Path) -> int:
-    """Copy CSVs under `src` to `dst`, mirroring the folder layout."""
+    """Read CSVs under `src`, inject Euler, flip NWU -> NED, write to `dst`.
+
+    Pipeline per file:  read -> inject_euler_angles -> to_ned -> write.
+    Result: raw/ holds NED-frame data with both quaternion (raw NWU) and
+    Euler (NED) orientation columns; downstream consumes Euler.
+    """
     paths = discover_trials(src)
     dst.mkdir(parents=True, exist_ok=True)
     for p in paths:
         rel = p.relative_to(src)
         out_path = dst / rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(p, out_path)
-        logger.info("dataset -> raw : %s", out_path.relative_to(ROOT))
+        df = pd.read_csv(p)
+        df = inject_euler_angles(df)
+        df = to_ned(df)
+        df.to_csv(out_path, index=False)
+        logger.info("dataset -> raw (NED) : %s", out_path.relative_to(ROOT))
     return len(paths)
 
 
