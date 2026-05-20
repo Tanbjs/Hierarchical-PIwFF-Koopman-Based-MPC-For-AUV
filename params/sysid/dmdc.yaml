@@ -1,0 +1,29 @@
+# DMDc fit configuration for Xplorer-mini.
+#
+# State / input / output are selected from the smoothed CSV column space by
+# substring groups: every word in a group must appear in the column name.
+# Mirrors the convention from the kmc reference pipeline.
+
+method: dmdc
+
+# Training data comes from the split produced by script/sysid/preprocess.py
+# (Step 4). Override only if you keep the split somewhere non-standard.
+# train_root: data/split/train
+
+# Normalization. Method: 'standard' | 'minmax' | 'none'.
+scaler:
+  method: standard
+  args:
+    with_mean: true
+    with_std: true
+
+# Column selection (word groups: AND-match against column names).
+feature_selection:
+  state:
+    - [odom, twist]
+  input:
+    - [est_tau]
+  output:
+    - [odom, twist]
+
+# Regression: ordinary least squares (the only method supported in this repo).
