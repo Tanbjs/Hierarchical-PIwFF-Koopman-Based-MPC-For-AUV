@@ -1,0 +1,15 @@
+position_controller:
+  type: pid
+  use_filter: false
+  use_feedforward: false
+  params:
+    kp: [1.5, 1.5, 1.5, 1.1, 1.1, 1.5]
+    ki: [0.021, 0.036, 0.01, 0.36, 0.43, 0.05]
+    kd: [0.01, 0.015, 0.03, 0.015, 0.0, 0.0]
+velocity_controller:
+  type: pid
+  params:
+    kp: [4.5, 5.0, 3.5, 1.7, 2.0, 5.5]
+    ki: [0.0, 0.0, 1.0, 0.05, 0.05, 0.05]
+    kd: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    sat_bound: [136.3905, 78.7474, 138.0776, 31.499, 46.0672, 12.8516]
