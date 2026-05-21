@@ -2,6 +2,8 @@
 
 *Paper §V – §VI.* One entry point — [script/control/simulation.py](../script/control/simulation.py) — backed by [src/controllers/](../src/controllers/) (controllers + MPC) and [src/utils/](../src/utils/) (plant, kinematics, reference, plotting).
 
+> **Reproducing the paper.** The YAMLs under [params/control/](../params/control/) — [dpid_gain.yaml](../params/control/dpid_gain.yaml) (PID–PID baseline), [params/control/dmdc/](../params/control/dmdc/) and [params/control/edmdc/](../params/control/edmdc/) (PIwFF outer-loop gains + Koopman MPC weights for std / offset-free, with / without preview) — already encode the gains tuned in paper §V – §VI. Running `python script/control/simulation.py` with the YAMLs as-shipped reproduces the manuscript study cases. Want to **play with the gains** to see how the cascade reacts? Copy a YAML, tweak the PIwFF P/I terms, MPC `Q` / `R` / `QI` weights, or velocity / torque bounds, and re-run — just remember that anything other than the shipped values is no longer the paper configuration.
+
 ```mermaid
 flowchart LR
     classDef artifact fill:#fafafa,stroke:#9a9a9a,stroke-width:1px,color:#1a1a1a
