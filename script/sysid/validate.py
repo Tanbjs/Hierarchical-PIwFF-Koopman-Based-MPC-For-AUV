@@ -32,78 +32,13 @@ sim_logger = logging.getLogger("Validation")
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sysid import PolynomialObservable, inject_euler_angles
-from utils import f_dyn, load_params, rk4_step
-
-
-# =============================================================================
-# Fitted-model loader (local-disk equivalent of DMDcWrapper / EDMDcWrapper)
-# =============================================================================
-
-@dataclass
-class FittedModel:
-    """Local-disk equivalent of DMDcWrapper / EDMDcWrapper.
-
-    `predict(x, u)` returns (x_next, y_next) in physical units:
-    - x_next: propagated full state -- seed for the next predict() call
-    - y_next: observation at k+1 in output_col space
-    For EDMDc, exploits C = [I 0]: the first n_state components of z are x.
-    """
-    name: str
-    A: np.ndarray
-    B: np.ndarray
-    scaler_x: object
-    scaler_u: object
-    scaler_y: object
-    state_col: list
-    input_col: list
-    output_col: list
-    observable: object  # PolynomialObservable | None
-    n_state: int
-    n_output: int
-
-    @classmethod
-    def load(cls, model_dir: Path, name: str) -> "FittedModel":
-        A = np.load(model_dir / "A.npy")
-        B = np.load(model_dir / "B.npy")
-        sx = joblib.load(model_dir / "scaler_x.joblib")
-        su = joblib.load(model_dir / "scaler_u.joblib")
-        sy = joblib.load(model_dir / "scaler_y.joblib")
-        cols = json.loads((model_dir / "columns.json").read_text())
-        meta = json.loads((model_dir / "metadata.json").read_text())
-
-        observable = None
-        if "observable" in meta:
-            cfg = meta["observable"]
-            observable = PolynomialObservable(
-                degree=int(cfg["degree"]),
-                include_bias=bool(cfg["include_bias"]),
-                interaction_only=bool(cfg["interaction_only"]),
-            )
-            observable.fit(np.zeros((1, int(meta["n_state"]))))
-
-        return cls(
-            name=name, A=A, B=B,
-            scaler_x=sx, scaler_u=su, scaler_y=sy,
-            state_col=cols["state"], input_col=cols["input"], output_col=cols["output"],
-            observable=observable,
-            n_state=int(meta["n_state"]),
-            n_output=len(cols["output"]),
-        )
-
-    def predict(self, x: np.ndarray, u: np.ndarray):
-        x_s = self.scaler_x.transform(np.atleast_2d(x))
-        u_s = self.scaler_u.transform(np.atleast_2d(u))
-        if self.observable is None:  # DMDc
-            x_next_s = x_s @ self.A.T + u_s @ self.B.T
-            y_next = self.scaler_y.inverse_transform(x_next_s[:, :self.n_output]).squeeze(0)
-            x_next = self.scaler_x.inverse_transform(x_next_s).squeeze(0)
-        else:  # EDMDc
-            z_s = self.observable.transform(x_s)
-            z_next_s = z_s @ self.A.T + u_s @ self.B.T
-            y_next = self.scaler_y.inverse_transform(z_next_s[:, :self.n_output]).squeeze(0)
-            x_next = self.scaler_x.inverse_transform(z_next_s[:, :self.n_state]).squeeze(0)
-        return x_next, y_next
+from sysid import FittedModel, PolynomialObservable, inject_euler_angles
+from utils import (
+    COLOR_DMDC, COLOR_EDMDC, COLOR_NONLINEAR, GRID_FIGSIZE, LABELS_NU_ANG,
+    LABELS_NU_LIN, PHASE_LINE_COLOR,
+    add_panel_labels, apply_ieee_style, format_figure,
+    f_dyn, load_params, rk4_step,
+)
 
 
 # =============================================================================
@@ -412,61 +347,7 @@ def report_metrics_separate_phase(results, save_dir: Path, step: int):
 
 def plot_predictions(results, save_dir: Path, step: int):
     """Generate 3x2 prediction plots for each trajectory (IEEE Access style)."""
-    COL2 = 7.16
-
-    plt.rcParams.update({
-        'font.family': 'serif',
-        'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif'],
-        'mathtext.fontset': 'stix',
-        'font.size': 8,
-        'axes.labelsize': 8,
-        'axes.titlesize': 8,
-        'xtick.labelsize': 7,
-        'ytick.labelsize': 7,
-        'legend.fontsize': 7,
-        'legend.framealpha': 1.0,
-        'legend.edgecolor': 'black',
-        'lines.linewidth': 0.9,
-        'axes.linewidth': 0.6,
-        'grid.linewidth': 0.4,
-        'grid.linestyle': ':',
-        'grid.alpha': 0.7,
-        'figure.dpi': 300,
-        'savefig.dpi': 300,
-        'savefig.bbox': 'tight',
-        'pdf.fonttype': 42,
-        'ps.fonttype': 42,
-    })
-
-    labels_nu_lin = [r'$u$ (m/s)', r'$v$ (m/s)', r'$w$ (m/s)']
-    labels_nu_ang = [r'$p$ (°/s)', r'$q$ (°/s)', r'$r$ (°/s)']
-
-    COLOR_NONLINEAR = '#2CA02C'
-    COLOR_DMDC      = '#3A78B8'
-    COLOR_EDMDC     = '#D62728'
-    PHASE_LINE_COLOR = '#555555'
-    GRID_FIGSIZE = (COL2, 5.8)
-
-    def add_panel_labels(axs_flat):
-        for ax, lbl in zip(axs_flat, 'abcdefghij'):
-            has_xlabel = bool(ax.get_xlabel())
-            y_pos = -0.45 if has_xlabel else -0.22
-            ax.text(0.5, y_pos, f'({lbl})', transform=ax.transAxes,
-                    fontsize=8, va='top', ha='center')
-
-    def format_figure(fig, axs, bottom_margin, ncol=None):
-        fig.align_ylabels(axs)
-        handles, labels_l = axs[0, 0].get_legend_handles_labels()
-        if ncol is None:
-            ncol = len(handles)
-        fig.tight_layout(rect=[0.02, bottom_margin, 1, 1.0])
-        if fig._suptitle is not None:
-            fig._suptitle.set_y(0.99)
-        fig.subplots_adjust(top=0.954, hspace=0.55)
-        fig.legend(handles, labels_l, loc='upper center', ncol=ncol,
-                   bbox_to_anchor=(0.5, bottom_margin + 0.04),
-                   columnspacing=1.5, handletextpad=0.5, fontsize=7,
-                   frameon=True, edgecolor='black')
+    apply_ieee_style()
 
     for result in results:
         traj = result['trajectory']
@@ -499,7 +380,7 @@ def plot_predictions(results, save_dir: Path, step: int):
                 ax_l.plot(time, pred_edmdc[:, i], color=COLOR_EDMDC, linewidth=0.9,
                           label='eDMDc' if i == 0 else "")
                 _add_phase_line(ax_l, label_first=(i == 0))
-                ax_l.set_ylabel(labels_nu_lin[i]); ax_l.grid(True)
+                ax_l.set_ylabel(LABELS_NU_LIN[i]); ax_l.grid(True)
 
                 ax_a = axs[i, 1]
                 ax_a.plot(time, true_state[:, i + 3], 'k--', linewidth=1.0)
@@ -507,7 +388,7 @@ def plot_predictions(results, save_dir: Path, step: int):
                 ax_a.plot(time, pred_dmdc[:, i + 3], color=COLOR_DMDC, linewidth=0.9)
                 ax_a.plot(time, pred_edmdc[:, i + 3], color=COLOR_EDMDC, linewidth=0.9)
                 _add_phase_line(ax_a, label_first=False)
-                ax_a.set_ylabel(labels_nu_ang[i]); ax_a.grid(True)
+                ax_a.set_ylabel(LABELS_NU_ANG[i]); ax_a.grid(True)
 
             axs[2, 0].set_xlabel('Time (s)'); axs[2, 1].set_xlabel('Time (s)')
             add_panel_labels(axs.flat)
