@@ -224,3 +224,5 @@ __marimo__/
 # Generated artifacts (raw data download, simulation results)
 /data/
 /result/
+acados_*.json
+c_generated_code/
