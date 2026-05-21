@@ -30,5 +30,3 @@ observable:
   degree: 2
   include_bias: false
   interaction_only: false
-
-# Regression: ordinary least squares (the only method supported in this repo).
