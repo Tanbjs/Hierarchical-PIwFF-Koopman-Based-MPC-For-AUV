@@ -2,7 +2,7 @@
 
 # Hierarchical PIwFF–Koopman-Based MPC for Offset-Free 6-DOF AUV Trajectory Tracking
 
-This repository accompanies the manuscript *"Hierarchical PIwFF–Koopman-Based MPC for Offset-Free 6-DOF AUV Trajectory Tracking: Simulation and Pool Experiments"* (submitted to **IEEE Access**, 2026), and provides the dataset ([download](https://github.com/Tanbjs/Hierarchical-PIwFF-Koopman-Based-MPC-For-AUV/releases/tag/dataset-v0.1)), controller implementation, and simulation/experimental scripts for the **Xplorer-mini** autonomous underwater vehicle (AUV).
+This repository accompanies the manuscript *"Hierarchical PIwFF–Koopman-Based MPC for Offset-Free 6-DOF AUV Trajectory Tracking: Simulation and Pool Experiments"* (submitted to **IEEE Access**, 2026), and provides the dataset, controller implementation, and simulation/experimental scripts for the **Xplorer-mini** autonomous underwater vehicle (AUV).
 
 ## Overview
 
@@ -97,7 +97,7 @@ flowchart LR
     classDef stage  fill:#1a1a1a,stroke:#1a1a1a,stroke-width:1.2px,color:#ffffff
 
     D[("<b>data/</b><br/>raw closed-loop logs<br/>(released)")]:::io
-    S["<b>sysid</b><br/>preprocess &middot; fit &middot; validate<br/><i>script/sysid/ + src/sysid/</i><br/><i>Section IV</i>"]:::stage
+    S["<b>sysid</b><br/>preprocess · fit · validate<br/><i>script/sysid/ + src/sysid/</i><br/><i>Section IV</i>"]:::stage
     C["<b>control</b><br/>cascade closed-loop sim<br/><i>script/control/ + src/controllers/</i><br/><i>Section V &ndash; VI</i>"]:::stage
     R[("<b>result/</b><br/>trained Koopman model<br/>validation + tracking plots")]:::io
 
@@ -115,7 +115,7 @@ Configs are hand-authored YAML in [params/](params/) (sysid feature selection, c
 
 | Path | Role | Contents |
 |---|---|---|
-| [data/](data/) | input | released `dataset/`, plus generated `raw/ &middot; cleaned/ &middot; smooth/ &middot; split/` from `preprocess.py` |
+| [data/](data/) | input | released `dataset/`, plus generated `raw/`, `cleaned/`, `smooth/`, `split/` from `preprocess.py` |
 | [src/sysid/](src/sysid/) | library | filters, polynomial observable, DMDc / EDMDc (OLS), `FittedModel` loader |
 | [src/controllers/](src/controllers/) | library | PIwFF outer loop, PID baseline, standard / integral-augmented Koopman MPC, virtual-reference preview |
 | [src/utils/](src/utils/) | library | Fossen 6-DOF kinematics + dynamics + RK4, path generators |
