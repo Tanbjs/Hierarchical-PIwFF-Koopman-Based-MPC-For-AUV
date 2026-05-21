@@ -15,11 +15,11 @@ Step 3  cleaned -> smooth
         data/smooth/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
 
 Step 4  smooth -> split
-    Trial-level train/test split via sklearn.train_test_split applied
-    sequentially (mirrors kmc's process.py:split_and_log_datasets). Output
-    is a folder of relative symlinks pointing back into data/smooth/:
+    Trial-level train/test split via sklearn.train_test_split (mirrors
+    kmc's process.py:split_and_log_datasets, restricted to 2-way for this
+    paper -- no hyperparameter validation set needed for OLS DMDc/eDMDc).
+    Output is a folder of relative symlinks pointing back into data/smooth/:
         data/split/{train,test}/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
-    2-way ratio -> {train, test}; 3-way ratio -> {train, val, test}.
 
 The filename conventions mirror the kmc reference pipeline so multiple
 cleaner/smoother configurations can coexist side-by-side without collisions.
@@ -28,7 +28,7 @@ Usage
     python script/sysid/preprocess.py
     python script/sysid/preprocess.py --hampel-window 5 --hampel-sigma 3 --ma-window 5
     python script/sysid/preprocess.py --skip-raw       # reuse existing data/raw/
-    python script/sysid/preprocess.py --ratio 0.7 0.15 0.15 --seed 42
+    python script/sysid/preprocess.py --ratio 0.85 0.15 --seed 42
 """
 
 from __future__ import annotations
@@ -125,35 +125,26 @@ def split_paths(
     ratio: Sequence[float],
     random_state: int,
 ) -> dict[str, list[Path]]:
-    """Sequential sklearn split mirroring kmc's split_and_log_datasets.
+    """Train/test split mirroring kmc's split_and_log_datasets (2-way only).
 
-    Operates on the sorted path list (sequence preserved across runs).
-
-    ratio=[0.85, 0.15]        -> {"train", "test"}
-    ratio=[0.7, 0.15, 0.15]   -> {"train", "val", "test"}
+    ratio=[train_frac, test_frac] -> {"train", "test"}. Inputs are
+    normalized if they don't sum to 1.0. Operates on the sorted path list
+    so the split is reproducible across runs.
     """
-    if len(ratio) not in (2, 3):
-        raise ValueError(f"ratio must have 2 or 3 entries, got {ratio!r}")
-
-    contexts = ["train", "val", "test"] if len(ratio) == 3 else ["train", "test"]
+    if len(ratio) != 2:
+        raise ValueError(
+            f"ratio must have 2 entries (train, test), got {ratio!r}"
+        )
 
     total = float(sum(ratio))
     if abs(total - 1.0) > 1e-9:
         logger.warning("ratio %s does not sum to 1.0; normalizing.", ratio)
         ratio = [r / total for r in ratio]
 
-    segments: list[list[Path]] = []
-    remaining = list(paths)
-    for i in range(len(ratio) - 1):
-        relative_test_size = 1.0 - (ratio[i] / sum(ratio[i:]))
-        main_part, split_part = train_test_split(
-            remaining, test_size=relative_test_size, random_state=random_state
-        )
-        segments.append(sorted(main_part))
-        remaining = list(split_part)
-    segments.append(sorted(remaining))
-
-    return dict(zip(contexts, segments))
+    train_part, test_part = train_test_split(
+        list(paths), test_size=ratio[1], random_state=random_state
+    )
+    return {"train": sorted(train_part), "test": sorted(test_part)}
 
 
 def build_split_stage(
@@ -198,8 +189,9 @@ def main() -> None:
                         help="Hampel MAD-sigma threshold (default: 3)")
     parser.add_argument("--ma-window", type=int, default=5,
                         help="Moving-average window size (default: 5)")
-    parser.add_argument("--ratio", type=float, nargs="+", default=[0.85, 0.15],
-                        help="Train/test (or train/val/test) ratio. Default: 0.85 0.15 "
+    parser.add_argument("--ratio", type=float, nargs=2, default=[0.85, 0.15],
+                        metavar=("TRAIN", "TEST"),
+                        help="Train/test ratio. Default: 0.85 0.15 "
                              "(matches kmc kaec configs).")
     parser.add_argument("--seed", type=int, default=42,
                         help="random_state for sklearn.train_test_split (default: 42, "
