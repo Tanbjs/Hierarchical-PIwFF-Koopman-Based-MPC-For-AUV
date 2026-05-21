@@ -226,3 +226,6 @@ __marimo__/
 /result/
 acados_*.json
 c_generated_code/
+
+# Manuscript drafts (kept locally only)
+/doc/*.pdf
