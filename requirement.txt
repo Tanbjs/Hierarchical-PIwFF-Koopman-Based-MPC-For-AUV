@@ -1,5 +1,23 @@
+# Core numerics
 numpy>=1.26
-pandas>=2.0
 scipy>=1.15
+pandas>=2.0
+
+# System identification (DMDc / EDMDc, scalers, persistence)
 scikit-learn>=1.7
+joblib>=1.5
+
+# Configuration
 pyyaml>=6.0
+
+# Plotting
+matplotlib>=3.10
+
+# Control simulation: cascade PIwFF -- Koopman MPC
+casadi>=3.7        # symbolic framework used to build the MPC OCP
+control>=0.10      # Python control systems library (dlqr, ctrb)
+tabulate>=0.10     # pretty-printed Koopman model summary
+
+# acados_template is NOT on PyPI. Install from the acados source tree after
+# building the C library; see https://docs.acados.org/python_interface/
+#   pip install -e <path-to-acados>/interfaces/acados_template
