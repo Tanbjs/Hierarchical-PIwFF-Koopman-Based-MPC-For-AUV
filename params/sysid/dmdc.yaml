@@ -25,5 +25,3 @@ feature_selection:
     - [est_tau]
   output:
     - [odom, twist]
-
-# Regression: ordinary least squares (the only method supported in this repo).
