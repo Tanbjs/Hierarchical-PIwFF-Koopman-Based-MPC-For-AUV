@@ -123,4 +123,4 @@ Configs are hand-authored YAML in [params/](params/) (sysid feature selection, c
 | [script/control/](script/control/) | entry point | `simulation.py` — see [doc/control.md](doc/control.md) |
 | [params/](params/) | configs | `xplorer_mini.yaml`, `sysid/{dmdc,edmdc}.yaml`, `control/...` controller gains |
 | [result/](result/) | outputs | `sysid/trained_model/`, `sysid/validation/`, `control/Case_*/` |
-| [doc/](doc/) | docs | manuscript (`draft0.pdf`), stage-by-stage details (`sysid.md`, `control.md`) |
+| [doc/](doc/) | docs | stage-by-stage details (`sysid.md`, `control.md`) |
