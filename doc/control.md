@@ -14,7 +14,7 @@ flowchart LR
     L2["<i>src/controllers/</i><br/>PIwFF + PID baseline<br/>std/integral Koopman MPC<br/>virtual reference preview"]:::lib
     L3["<i>src/utils/</i><br/>Fossen f_dyn (RK4)<br/>figure-8 path"]:::lib
     S["<b>simulation.py</b><br/>3 study cases on figure-8 ref"]:::script
-    R2[("<b>result/control/Case_{1,2,3}_.../</b><br/>tracking plots &middot; RMSE/MaxAE tables")]:::artifact
+    R2[("<b>result/control/Case_{1,2,3}_.../</b><br/>tracking plots · RMSE/MaxAE tables")]:::artifact
 
     R1 --> S
     P1 --> S
