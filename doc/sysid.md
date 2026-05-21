@@ -9,17 +9,17 @@ flowchart LR
     classDef lib      fill:#ffffff,stroke:#1a1a1a,stroke-width:1.2px,color:#1a1a1a,stroke-dasharray:4 3
 
     D0[("<b>data/dataset/</b><br/>released closed-loop logs<br/>(NWU)")]:::artifact
-    S0["<b>preprocess.py</b><br/>NWU&rarr;NED &middot; Hampel &middot; MA &middot; split"]:::script
-    D1[("<b>data/split/</b><br/>train &middot; test symlinks")]:::artifact
+    S0["<b>preprocess.py</b><br/>NWU&rarr;NED · Hampel · MA · split"]:::script
+    D1[("<b>data/split/</b><br/>train · test symlinks")]:::artifact
 
-    P0[("<b>params/sysid/</b><br/>dmdc.yaml &middot; edmdc.yaml")]:::artifact
-    L1["<i>src/sysid/</i><br/>filters &middot; observables<br/>DMDc &middot; EDMDc &middot; FittedModel"]:::lib
+    P0[("<b>params/sysid/</b><br/>dmdc.yaml · edmdc.yaml")]:::artifact
+    L1["<i>src/sysid/</i><br/>filters · observables<br/>DMDc · EDMDc · FittedModel"]:::lib
     S1["<b>fit.py</b><br/>OLS regression in lifted space"]:::script
-    R1[("<b>result/sysid/trained_model/</b><br/>A.npy &middot; B.npy &middot; scalers<br/>columns.json &middot; metadata.json")]:::artifact
+    R1[("<b>result/sysid/trained_model/</b><br/>A.npy · B.npy · scalers<br/>columns.json · metadata.json")]:::artifact
 
     S2["<b>validate.py</b><br/>one-/p-step prediction<br/>vs nonlinear baseline"]:::script
     L3["<i>src/utils/</i><br/>Fossen f_dyn (RK4)"]:::lib
-    R2[("<b>result/sysid/validation/</b><br/>RMSE tables &middot; prediction PDFs")]:::artifact
+    R2[("<b>result/sysid/validation/</b><br/>RMSE tables · prediction PDFs")]:::artifact
 
     D0 --> S0 --> D1
     D1 --> S1
