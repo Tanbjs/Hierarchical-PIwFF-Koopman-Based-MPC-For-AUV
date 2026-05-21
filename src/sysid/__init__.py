@@ -14,6 +14,7 @@ from .filters import (
     hampel_filter,
     moving_average,
 )
+from .fitted_model import FittedModel
 from .models import DMDc, EDMDc
 from .observable import (
     BaseObservable,
@@ -24,6 +25,7 @@ from .observable import (
 __all__ = [
     "DMDc",
     "EDMDc",
+    "FittedModel",
     "BaseObservable",
     "IdentityObservable",
     "PolynomialObservable",
