@@ -64,7 +64,7 @@ def figure8_path(
         theta = total_theta * s
 
         x_l = -A * np.cos(theta)
-        y_l = W * np.sin(2 * theta)
+        y_l = -W * np.sin(2 * theta)
 
         x = center[0] + x_l * np.cos(alpha) - y_l * np.sin(alpha)
         y = center[1] + x_l * np.sin(alpha) + y_l * np.cos(alpha)
@@ -74,7 +74,7 @@ def figure8_path(
 
         # Tangent yaw from instantaneous velocity
         dx_l = A * np.sin(theta)
-        dy_l = 2 * W * np.cos(2 * theta)
+        dy_l = -2 * W * np.cos(2 * theta)
         dx = dx_l * np.cos(alpha) - dy_l * np.sin(alpha)
         dy = dx_l * np.sin(alpha) + dy_l * np.cos(alpha)
         psi = np.arctan2(dy, dx) if np.linalg.norm([dx, dy]) > 1e-6 else alpha
@@ -82,92 +82,3 @@ def figure8_path(
         eta_d[i, :] = [x, y, z, phi, theta_pitch, psi]
 
     return eta_d, t_span
-
-
-def zigzag_path(
-    num_zigs: int,
-    start_point,
-    end_point,
-    dt: float,
-    tfinal: float,
-    amplitude: float = 2.0,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Generate a 6-DOF zig-zag trajectory between two poses.
-
-    The vehicle travels along the straight line from `start_point` to
-    `end_point` while sinusoidally weaving sideways with the given
-    `amplitude` and `num_zigs` full periods. Yaw is set to the path
-    tangent (so the vehicle always faces along its instantaneous velocity);
-    roll and pitch interpolate linearly between endpoints.
-
-    Args:
-        num_zigs:    number of full sinusoidal periods over the trajectory
-        start_point: 6-vector [x, y, z, roll, pitch, yaw] in NED
-        end_point:   6-vector [x, y, z, roll, pitch, yaw] in NED
-        dt:          sample interval [s]
-        tfinal:      total trajectory duration [s]
-        amplitude:   sideways deviation amplitude [m]
-
-    Returns:
-        eta_d:  (N, 6) array of reference poses
-        t:      (N,)   time vector starting at 0
-    """
-    if tfinal <= 0:
-        raise ValueError("tfinal must be positive.")
-    if not (0 < dt <= tfinal):
-        raise ValueError("dt must be positive and <= tfinal.")
-    if amplitude < 0:
-        raise ValueError("amplitude must be non-negative.")
-    if num_zigs <= 0:
-        raise ValueError("num_zigs must be positive.")
-
-    t = np.arange(0, tfinal + dt, dt)
-    N = len(t)
-
-    start_pos = np.array(start_point[:3], dtype=float)
-    end_pos = np.array(end_point[:3], dtype=float)
-    start_orient = np.array(start_point[3:], dtype=float)
-    end_orient = np.array(end_point[3:], dtype=float)
-
-    main_path_vector = end_pos - start_pos
-    main_path_length = np.linalg.norm(main_path_vector)
-    main_path_direction = (
-        main_path_vector / main_path_length
-        if main_path_length > 0
-        else np.array([1.0, 0.0, 0.0])
-    )
-
-    # Perpendicular in the xy-plane; falls back to +y for a purely vertical path.
-    perp_vector = np.array([-main_path_direction[1], main_path_direction[0], 0.0])
-    norm_perp = np.linalg.norm(perp_vector)
-    if norm_perp == 0:
-        perp_vector = np.array([0.0, 1.0, 0.0])
-    else:
-        perp_vector /= norm_perp
-
-    position = np.zeros((N, 3))
-    orientation = np.zeros((N, 3))
-    angular_freq = (2 * np.pi * num_zigs) / tfinal
-    centerline_vel = main_path_vector / tfinal if tfinal > 0 else np.zeros(3)
-
-    for i, ti in enumerate(t):
-        s = ti / tfinal if tfinal > 0 else 0.0
-
-        # Centerline + sinusoidal deviation
-        position[i] = start_pos + s * main_path_vector + (
-            amplitude * np.sin(angular_freq * ti)
-        ) * perp_vector
-
-        # Roll/pitch: linear interpolation
-        orientation[i, 0] = (1 - s) * start_orient[0] + s * end_orient[0]
-        orientation[i, 1] = (1 - s) * start_orient[1] + s * end_orient[1]
-
-        # Yaw: instantaneous tangent direction
-        deviation_vel = amplitude * angular_freq * np.cos(angular_freq * ti) * perp_vector
-        tangent = centerline_vel + deviation_vel
-        if np.linalg.norm(tangent[:2]) > 1e-6:
-            orientation[i, 2] = np.arctan2(tangent[1], tangent[0])
-        else:
-            orientation[i, 2] = np.arctan2(main_path_direction[1], main_path_direction[0])
-
-    return np.hstack([position, orientation]), t
