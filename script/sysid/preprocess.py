@@ -1,25 +1,25 @@
-"""Preprocess: data/dataset -> raw -> cleaned -> smooth -> split.
+"""Preprocess: data/sysid/dataset -> raw -> cleaned -> smooth -> split.
 
 Step 1  dataset -> raw  (NWU -> NED)
-    Read every trial CSV from data/dataset/, apply the NWU -> NED axis flip
+    Read every trial CSV from data/sysid/dataset/, apply the NWU -> NED axis flip
     (negate y, z components of position / velocity / force / torque /
-    quaternion columns), and write to data/raw/, preserving folder layout
+    quaternion columns), and write to data/sysid/raw/, preserving folder layout
     and filename. All downstream stages operate in NED.
 
 Step 2  raw -> cleaned
-    Apply the vectorized Hampel outlier filter to every CSV under data/raw/:
-        data/cleaned/{depth}/{trial}/hampel_window{w}_sigma{n}.csv
+    Apply the vectorized Hampel outlier filter to every CSV under data/sysid/raw/:
+        data/sysid/cleaned/{depth}/{trial}/hampel_window{w}_sigma{n}.csv
 
 Step 3  cleaned -> smooth
-    Apply a centered moving-average filter to every CSV under data/cleaned/:
-        data/smooth/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
+    Apply a centered moving-average filter to every CSV under data/sysid/cleaned/:
+        data/sysid/smooth/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
 
 Step 4  smooth -> split
     Trial-level train/test split via sklearn.train_test_split (mirrors
     kmc's process.py:split_and_log_datasets, restricted to 2-way for this
     paper -- no hyperparameter validation set needed for OLS DMDc/eDMDc).
-    Output is a folder of relative symlinks pointing back into data/smooth/:
-        data/split/{train,test}/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
+    Output is a folder of relative symlinks pointing back into data/sysid/smooth/:
+        data/sysid/split/{train,test}/{depth}/{trial}/{cleaner_stem}/ma_window{w}.csv
 
 The filename conventions mirror the kmc reference pipeline so multiple
 cleaner/smoother configurations can coexist side-by-side without collisions.
@@ -27,7 +27,7 @@ cleaner/smoother configurations can coexist side-by-side without collisions.
 Usage
     python script/sysid/preprocess.py
     python script/sysid/preprocess.py --hampel-window 5 --hampel-sigma 3 --ma-window 5
-    python script/sysid/preprocess.py --skip-raw       # reuse existing data/raw/
+    python script/sysid/preprocess.py --skip-raw       # reuse existing data/sysid/raw/
     python script/sysid/preprocess.py --ratio 0.85 0.15 --seed 42
 """
 
@@ -86,7 +86,7 @@ def build_cleaned_stage(
     window_size: int,
     n_sigmas: float,
 ) -> int:
-    """Apply Hampel filter; write data/cleaned/.../hampel_window{w}_sigma{n}.csv."""
+    """Apply Hampel filter; write data/sysid/cleaned/.../hampel_window{w}_sigma{n}.csv."""
     sigma_repr = int(n_sigmas) if float(n_sigmas).is_integer() else n_sigmas
     suffix = f"hampel_window{window_size}_sigma{sigma_repr}.csv"
 
@@ -104,7 +104,7 @@ def build_smooth_stage(
     dst: Path,
     window_size: int,
 ) -> int:
-    """Apply MA filter; write data/smooth/.../<cleaner_stem>/ma_window{w}.csv."""
+    """Apply MA filter; write data/sysid/smooth/.../<cleaner_stem>/ma_window{w}.csv."""
     smoother_suffix = f"ma_window{window_size}.csv"
 
     def rename(input_path: Path) -> str:
@@ -154,7 +154,7 @@ def build_split_stage(
     seed: int,
     ma_window: int,
 ) -> dict[str, int]:
-    """Symlink smooth CSVs into data/split/{context}/, mirroring layout.
+    """Symlink smooth CSVs into data/sysid/split/{context}/, mirroring layout.
 
     Idempotent (clears existing dst). Only links files matching the active
     ma_window (one smoother config per split).
@@ -197,7 +197,7 @@ def main() -> None:
                         help="random_state for sklearn.train_test_split (default: 42, "
                              "matches kmc).")
     parser.add_argument("--skip-raw", action="store_true",
-                        help="Skip the dataset -> raw copy; reuse existing data/raw/")
+                        help="Skip the dataset -> raw copy; reuse existing data/sysid/raw/")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -205,11 +205,12 @@ def main() -> None:
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
 
-    dataset_dir = ROOT / "data" / "dataset"
-    raw_dir = ROOT / "data" / "raw"
-    cleaned_dir = ROOT / "data" / "cleaned"
-    smooth_dir = ROOT / "data" / "smooth"
-    split_dir = ROOT / "data" / "split"
+    sysid_dir = ROOT / "data" / "sysid"
+    dataset_dir = sysid_dir / "dataset"
+    raw_dir = sysid_dir / "raw"
+    cleaned_dir = sysid_dir / "cleaned"
+    smooth_dir = sysid_dir / "smooth"
+    split_dir = sysid_dir / "split"
 
     if args.skip_raw:
         logger.info("Step 1/4  dataset -> raw  (skipped, reusing %s)", raw_dir)
