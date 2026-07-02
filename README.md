@@ -4,6 +4,8 @@
 
 This repository accompanies the manuscript *"Hierarchical PIwFF–Koopman-Based MPC for Offset-Free AUV Trajectory Tracking: Simulation and Pool Experiments"* (submitted to **IEEE Access**, 2026), and provides the dataset, controller implementation, and simulation/experimental scripts for the **Xplorer-mini** autonomous underwater vehicle (AUV).
 
+📺 **Pool test video:** [Xplorer-mini AUV pool experiment](https://www.youtube.com/watch?v=RqSk-HKhVB4)
+
 ## Overview
 
 Accurate trajectory tracking of autonomous underwater vehicles (AUVs) is challenging because nonlinear hydrodynamics, actuator constraints, and persistent plant--model mismatch degrade controller performance. This paper proposes a hierarchical PIwFF--Koopman MPC for offset-free trajectory tracking of the Xplorer-mini AUV. The outer PIwFF loop converts pose-tracking errors into body-fixed velocity commands, while the inner loop uses a Koopman-based linear prediction model to track the corresponding velocity/lifted-state commands subject to constraints. To reduce persistent velocity-output bias caused by finite-dimensional Koopman approximation errors, unmodeled dynamics, and unknown persistent disturbances, the inner MPC is augmented with an output-error integrator. DMDc and eDMDc are compared as prediction models; although eDMDc improves open-loop prediction, DMDc is selected for closed-loop control because it provides comparable tracking performance at a lower computational cost. A preview command is further introduced for time-varying references. Simulation and pool experiments on a figure-8 trajectory show that the proposed controller reduces steady-state bias and improves trajectory tracking relative to the nominal Koopman MPC and PID--PID baselines under the tested conditions.
@@ -124,8 +126,6 @@ Configs are hand-authored YAML in [params/](params/) (sysid feature selection, c
 ## Pool Experiment
 
 Separate from the simulation pipeline above, the repo ships the **pool-experiment comparison** of *Paper §VI* — the headline figure-8 benchmark run on the physical Xplorer-mini AUV. Running the AUV itself is out of scope here; only the **recorded logs** and the **replot script** are included.
-
-📺 **Pool test video:** [Xplorer-mini AUV pool experiment](https://www.youtube.com/watch?v=RqSk-HKhVB4)
 
 `script/control/pool_experiment.py` reads the released ROS2 rosbag2/mcap logs under `data/control/pool_experiment/` (three controllers: PID–PID, Nominal MPC, Offset-Free MPC) and regenerates the 8 IEEE-style comparison figures/tables under `result/control/pool_experiment/` — the same figure set as the simulation cases, but from real-hardware data. The mcap files embed their own ROS2 message schema, so no ROS2 install is required (only `mcap-ros2-support`).
 
