@@ -34,11 +34,11 @@ def apply_ieee_style() -> None:
         'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif'],
         'mathtext.fontset': 'stix',
         'font.size': 8,
-        'axes.labelsize': 8,
+        'axes.labelsize': 8.5,
         'axes.titlesize': 8,
         'xtick.labelsize': 7,
         'ytick.labelsize': 7,
-        'legend.fontsize': 7,
+        'legend.fontsize': 8,
         'legend.framealpha': 1.0,
         'legend.edgecolor': 'black',
         'lines.linewidth': 0.9,
@@ -83,5 +83,5 @@ def format_figure(fig, axs, bottom_margin: float, ncol: int | None = None) -> No
     fig.subplots_adjust(top=0.954, hspace=0.55)
     fig.legend(handles, labels, loc='upper center', ncol=ncol,
                bbox_to_anchor=(0.5, bottom_margin + 0.04),
-               columnspacing=1.5, handletextpad=0.5, fontsize=7,
+               columnspacing=1.5, handletextpad=0.5,
                frameon=True, edgecolor='black')
