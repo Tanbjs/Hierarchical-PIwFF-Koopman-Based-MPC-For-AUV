@@ -292,7 +292,7 @@ def plot_response(histories, labels, eta_ref_full, save_dir=None):
         fig6.legend(handles6, labels6, loc='lower center', ncol=legend_ncol,
                     bbox_to_anchor=(0.5, 0.10),
                     columnspacing=1.0, handletextpad=0.4,
-                    fontsize=6, frameon=True, edgecolor='black', framealpha=1.0)
+                    frameon=True, edgecolor='black', framealpha=1.0)
         ax6.set_position([-0.05, 0.18, 1.05, 0.82])
 
     # ========================================================================
