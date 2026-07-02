@@ -2,7 +2,7 @@
 
 Pipeline (mirrors the kmc reference, MLflow stripped out):
 
-    data/split/train/**/*.csv
+    data/sysid/split/train/**/*.csv
         -> feature selection (state / input / output column groups)
         -> StandardScaler / MinMaxScaler fit on train
         -> stack one-step pairs (X_k, U_k, X_{k+1})
@@ -296,13 +296,13 @@ def main() -> None:
     if method not in {"dmdc", "edmdc"}:
         raise ValueError(f"Unsupported method: {method!r}")
 
-    train_root = ROOT / config.get("train_root", "data/split/train")
+    train_root = ROOT / config.get("train_root", "data/sysid/split/train")
     paths = discover_smooth_trials(train_root, "**/*.csv")
     logger.info("Loaded %d train trials from %s", len(paths),
                 train_root.relative_to(ROOT))
-    if not (ROOT / "data" / "split" / "test").exists():
+    if not (ROOT / "data" / "sysid" / "split" / "test").exists():
         logger.warning(
-            "No data/split/test/ found -- run script/sysid/preprocess.py first."
+            "No data/sysid/split/test/ found -- run script/sysid/preprocess.py first."
         )
 
     train_trials = [load_trial(p) for p in paths]
