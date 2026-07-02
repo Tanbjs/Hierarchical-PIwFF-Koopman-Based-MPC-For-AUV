@@ -372,7 +372,7 @@ def plot_predictions(results, save_dir: Path, step: int):
             for i in range(3):
                 ax_l = axs[i, 0]
                 ax_l.plot(time, true_state[:, i], 'k--', linewidth=1.0,
-                          label='Ground Truth' if i == 0 else "")
+                          label='Estimated State (UKF)' if i == 0 else "")
                 ax_l.plot(time, pred_nonlinear[:, i], color=COLOR_NONLINEAR, linewidth=0.9,
                           label='Nonlinear' if i == 0 else "")
                 ax_l.plot(time, pred_dmdc[:, i], color=COLOR_DMDC, linewidth=0.9,
@@ -426,7 +426,7 @@ def main():
     parser.add_argument("--model-root", type=Path,
                         default=ROOT / "result" / "sysid" / "trained_model")
     parser.add_argument("--test-root", type=Path,
-                        default=ROOT / "data" / "split" / "test")
+                        default=ROOT / "data" / "sysid" / "split" / "test")
     parser.add_argument("--output", type=Path,
                         default=ROOT / "result" / "sysid" / "validation")
     parser.add_argument("--auv-params", type=Path,
