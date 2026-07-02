@@ -8,7 +8,7 @@ method: edmdc
 # Data discovery (see dmdc.yaml for the format).
 # Training data comes from the split produced by script/sysid/preprocess.py
 # (Step 4). Override only if you keep the split somewhere non-standard.
-# train_root: data/split/train
+# train_root: data/sysid/split/train
 
 scaler:
   method: standard
