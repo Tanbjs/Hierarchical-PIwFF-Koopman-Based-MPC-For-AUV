@@ -63,7 +63,7 @@ def to_ned(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def discover_trials(root: str | Path = "data/dataset") -> list[Path]:
+def discover_trials(root: str | Path = "data/sysid/dataset") -> list[Path]:
     """Return all trial CSVs under `root`, sorted alphabetically for determinism."""
     root = Path(root)
     if not root.exists():
@@ -126,7 +126,7 @@ def load_trial(path: str | Path, inject_euler: bool = True) -> pd.DataFrame:
 
 
 def load_dataset(
-    root: str | Path = "data/dataset",
+    root: str | Path = "data/sysid/dataset",
     inject_euler: bool = True,
 ) -> list[tuple[str, pd.DataFrame]]:
     """Discover and load all trial CSVs.
@@ -161,8 +161,8 @@ def process_stage(
     into the output filename a la the kmc pipeline).
 
     Args:
-        src_root:  Input root (e.g. "data/raw" or "data/cleaned").
-        dst_root:  Output root (e.g. "data/cleaned", "data/smooth"). Created if missing.
+        src_root:  Input root (e.g. "data/sysid/raw" or "data/sysid/cleaned").
+        dst_root:  Output root (e.g. "data/sysid/cleaned", "data/sysid/smooth"). Created if missing.
         transform: A function `df -> df` applied to each trial (e.g. `hampel_filter`).
         rename:    Optional `Path -> str` returning the output filename (no parents).
                    When omitted, the input filename is reused.
