@@ -10,9 +10,9 @@ flowchart LR
     classDef script   fill:#1a1a1a,stroke:#1a1a1a,stroke-width:1.2px,color:#ffffff
     classDef lib      fill:#ffffff,stroke:#1a1a1a,stroke-width:1.2px,color:#1a1a1a,stroke-dasharray:4 3
 
-    D0[("<b>data/dataset/</b><br/>released closed-loop logs<br/>(NWU)")]:::artifact
+    D0[("<b>data/sysid/dataset/</b><br/>released closed-loop logs<br/>(NWU)")]:::artifact
     S0["<b>preprocess.py</b><br/>NWU&rarr;NED · Hampel · MA · split"]:::script
-    D1[("<b>data/split/</b><br/>train · test symlinks")]:::artifact
+    D1[("<b>data/sysid/split/</b><br/>train · test symlinks")]:::artifact
 
     P0[("<b>params/sysid/</b><br/>dmdc.yaml · edmdc.yaml")]:::artifact
     L1["<i>src/sysid/</i><br/>filters · observables<br/>DMDc · EDMDc · FittedModel"]:::lib
@@ -37,12 +37,12 @@ flowchart LR
 
 ## Stage 1 — Preprocess (`script/sysid/preprocess.py`)
 
-Reads the released CSVs under `data/dataset/` and runs four sequential stages, each writing its own intermediate folder so cleaner/smoother configurations can coexist side-by-side:
+Reads the released CSVs under `data/sysid/dataset/` and runs four sequential stages, each writing its own intermediate folder so cleaner/smoother configurations can coexist side-by-side:
 
-1. **dataset &rarr; raw** — inject Euler angles, then flip NWU axes to NED (`data/raw/`). All downstream code operates in NED.
-2. **raw &rarr; cleaned** — vectorized Hampel outlier filter (`data/cleaned/.../hampel_window{w}_sigma{n}.csv`).
-3. **cleaned &rarr; smooth** — centered moving-average filter (`data/smooth/.../ma_window{w}.csv`).
-4. **smooth &rarr; split** — sequential `sklearn.train_test_split` (seed `42`, ratio `0.85 / 0.15` &rarr; **25 train / 5 test** runs from the 30-run dataset, matching Table 1 of the paper); output is a tree of relative symlinks at `data/split/{train,test}/...`, mirroring the `kmc` reference pipeline.
+1. **dataset &rarr; raw** — inject Euler angles, then flip NWU axes to NED (`data/sysid/raw/`). All downstream code operates in NED.
+2. **raw &rarr; cleaned** — vectorized Hampel outlier filter (`data/sysid/cleaned/.../hampel_window{w}_sigma{n}.csv`).
+3. **cleaned &rarr; smooth** — centered moving-average filter (`data/sysid/smooth/.../ma_window{w}.csv`).
+4. **smooth &rarr; split** — sequential `sklearn.train_test_split` (seed `42`, ratio `0.85 / 0.15` &rarr; **25 train / 5 test** runs from the 30-run dataset, matching Table 1 of the paper); output is a tree of relative symlinks at `data/sysid/split/{train,test}/...`, mirroring the `kmc` reference pipeline.
 
 **Paper defaults (recommended — reproduces Table 1):** `--hampel-window 5 --hampel-sigma 3 --ma-window 5 --ratio 0.85 0.15 --seed 42`. The paper specifies the train/test split and the sampling period `Ts = 0.1 s` from Table 1; it only requires "a Hampel filter" and "a short moving-average window," so the filter widths (5/3/5) are the project's reference choice and are baked in as the script defaults.
 
@@ -53,7 +53,7 @@ python script/sysid/preprocess.py
 # Play with it — sweep filter widths or split ratio.
 python script/sysid/preprocess.py --hampel-window 7 --hampel-sigma 3 --ma-window 9
 python script/sysid/preprocess.py --ratio 0.80 0.20 --seed 123
-python script/sysid/preprocess.py --skip-raw           # reuse existing data/raw/
+python script/sysid/preprocess.py --skip-raw           # reuse existing data/sysid/raw/
 ```
 
 ## Stage 2 — Fit Koopman model (`script/sysid/fit.py`)
