@@ -13,6 +13,10 @@ pyyaml>=6.0
 # Plotting
 matplotlib>=3.10
 
+# Pool experiments: read ROS2 rosbag2/mcap logs (paper §VI figure-8 study).
+# The mcap files embed their own message schema, so no ROS2 install is needed.
+mcap-ros2-support>=0.5
+
 # Control simulation: cascade PIwFF -- Koopman MPC
 casadi>=3.7        # symbolic framework used to build the MPC OCP
 control>=0.10      # Python control systems library (dlqr, ctrb)
