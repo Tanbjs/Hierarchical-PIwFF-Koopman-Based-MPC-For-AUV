@@ -3,8 +3,6 @@
 # Hierarchical PIwFF–Koopman-Based MPC for Offset-Free AUV Trajectory Tracking
 
 > B. Maneeloke *et al.*, "Hierarchical PIwFF–Koopman-Based Offset-Free MPC for AUV Trajectory Tracking: Simulation and Pool Experiments," in **IEEE Access**, doi: [10.1109/ACCESS.2026.3719198](https://doi.org/10.1109/ACCESS.2026.3719198).
->
-> **Keywords:** Licenses; Modeling; Nuclear facility regulation; Tracking; Timing; Simulation; Trajectory tracking; Trajectory; Educational institutions; Weighted sum model; Autonomous underwater vehicle (AUV); Koopman operator; model predictive control (MPC); offset-free control; data-driven control; trajectory tracking
 
 <details>
 <summary>BibTeX</summary>
