@@ -2,19 +2,40 @@
 
 # Hierarchical PIwFF–Koopman-Based MPC for Offset-Free AUV Trajectory Tracking
 
-This repository accompanies the manuscript *"Hierarchical PIwFF–Koopman-Based MPC for Offset-Free AUV Trajectory Tracking: Simulation and Pool Experiments"* (submitted to **IEEE Access**, 2026), and provides the dataset, controller implementation, and simulation/experimental scripts for the **Xplorer-mini** autonomous underwater vehicle (AUV).
+> B. Maneeloke *et al.*, "Hierarchical PIwFF–Koopman-Based Offset-Free MPC for AUV Trajectory Tracking: Simulation and Pool Experiments," in **IEEE Access**, doi: [10.1109/ACCESS.2026.3719198](https://doi.org/10.1109/ACCESS.2026.3719198).
+>
+> **Keywords:** Licenses; Modeling; Nuclear facility regulation; Tracking; Timing; Simulation; Trajectory tracking; Trajectory; Educational institutions; Weighted sum model; Autonomous underwater vehicle (AUV); Koopman operator; model predictive control (MPC); offset-free control; data-driven control; trajectory tracking
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@article{maneeloke2026hierarchical,
+  title   = {Hierarchical PIwFF--Koopman-Based Offset-Free MPC for AUV Trajectory Tracking: Simulation and Pool Experiments},
+  author  = {Maneeloke, Benjaset and Sanposh, Peerayot and Tipsuwan, Yodyium and Boonto, Sudchai and Tanaprasitpattana, Warit and Techajaroonjit, Nattakit and Chinthaned, Natthawut and Sirisuay, Soranuth},
+  journal = {IEEE Access},
+  year    = {2026},
+  doi     = {10.1109/ACCESS.2026.3719198}
+}
+```
+
+</details>
+
+This repository accompanies the paper above and provides the dataset, controller implementation, and simulation/experimental scripts for the **Xplorer-mini** autonomous underwater vehicle (AUV).
+
+
 
 📺 **Pool test video:** [Xplorer-mini AUV pool experiment](https://www.youtube.com/watch?v=RqSk-HKhVB4)
 
-## Overview
+## Abstract
 
-Accurate trajectory tracking of autonomous underwater vehicles (AUVs) is challenging because nonlinear hydrodynamics, actuator constraints, and persistent plant--model mismatch degrade controller performance. This paper proposes a hierarchical PIwFF--Koopman MPC for offset-free trajectory tracking of the Xplorer-mini AUV. The outer PIwFF loop converts pose-tracking errors into body-fixed velocity commands, while the inner loop uses a Koopman-based linear prediction model to track the corresponding velocity/lifted-state commands subject to constraints. To reduce persistent velocity-output bias caused by finite-dimensional Koopman approximation errors, unmodeled dynamics, and unknown persistent disturbances, the inner MPC is augmented with an output-error integrator. DMDc and eDMDc are compared as prediction models; although eDMDc improves open-loop prediction, DMDc is selected for closed-loop control because it provides comparable tracking performance at a lower computational cost. A preview command is further introduced for time-varying references. Simulation and pool experiments on a figure-8 trajectory show that the proposed controller reduces steady-state bias and improves trajectory tracking relative to the nominal Koopman MPC and PID--PID baselines under the tested conditions.
+Accurate trajectory tracking of autonomous underwater vehicles (AUVs) is challenging because nonlinear hydrodynamics, actuator constraints, and persistent plant–model mismatch degrade controller performance. This paper proposes a hierarchical Proportional-Integral with Feedforward (PIwFF)–Koopman-based offset-free model predictive control (MPC) for trajectory tracking of the Xplorer-mini AUV. The outer PIwFF loop converts pose-tracking errors and reference pose rates into body-fixed velocity commands using a proportional-integral structure augmented with a velocity feedforward term to anticipate reference motion, while the inner Koopman-based MPC tracks the velocity/lifted-state commands with actuator and velocity constraints enforced by construction. A cascade stability analysis establishes uniform ultimate boundedness (UUB) of the tracking errors under standard MPC assumptions. To reduce persistent velocity-output bias caused by finite-dimensional Koopman approximation errors, unmodeled dynamics, and unknown persistent disturbances, the inner MPC is augmented with an output-error integrator. DMDc and eDMDc are compared as prediction models; although eDMDc improves open-loop prediction accuracy, DMDc is selected for closed-loop control because it provides comparable tracking performance at a lower computational cost. Furthermore, a preview command is further introduced for time-varying references. Simulation and pool experiments on a figure-8 trajectory demonstrate that the proposed controller reduces steady-state bias and improves trajectory tracking relative to the PIwFF–Koopman-based nominal MPC and PID–PID baselines under the tested conditions.
 
 ## Key Contributions
 
 1. **Closed-loop system identification with DMDc and eDMDc** — An identification procedure using a diagonal-transit and sinusoidal-weaving maneuver designed to excite the cross-coupled 6-DOF dynamics, together with an empirical comparison of DMDc and eDMDc in both open-loop prediction and closed-loop tracking that reveals eDMDc to be more accurate in open loop yet DMDc to track better in closed loop, attributed to over-parameterization of the lifted basis.
-2. **Offset-free augmentation of the Koopman MPC** — The inner linear MPC is augmented with an integral of the output tracking error in the lifted Koopman state, driving to zero the persistent bias arising jointly from the Koopman approximation residual and constant external disturbance, without requiring a separate observer. A preview component further anticipates time-varying references at the high-curvature points of a figure-8 trajectory.
-3. **Pool-experiment validation** — A comparative study of the proposed offset-free hierarchical controller against a nominal (non-offset-free) variant and a cascaded PID baseline in both simulation and pool experiments on the Xplorer-mini AUV.
+2. **Offset-free augmentation of the inner Koopman MPC with reference preview** — The inner linear MPC is augmented with an integral of the output tracking error in the lifted Koopman state, driving to zero the persistent bias arising jointly from the Koopman approximation residual and constant external disturbance, without requiring a separate observer. A preview component further anticipates time-varying references at the high-curvature points of a figure-8 trajectory. Actuator and velocity constraints are enforced within a convex QP, with feasibility monitored throughout the trials.
+3. **Pool-experimental validation** — A comparative study of the proposed offset-free hierarchical controller against a nominal (non-offset-free) variant and a cascaded PID baseline in both simulation and pool experiments on the Xplorer-mini AUV.
 
 ## Installation
 
@@ -146,3 +167,5 @@ python script/control/pool_experiment.py
 | [params/](params/) | configs | `xplorer_mini.yaml`, `sysid/{dmdc,edmdc}.yaml`, `control/...` controller gains |
 | [result/](result/) | outputs | `sysid/trained_model/`, `sysid/validation/`, `control/Case_*/`, `control/pool_experiment/` |
 | [doc/](doc/) | docs | stage-by-stage details (`sysid.md`, `control.md`) |
+
+
