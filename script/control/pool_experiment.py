@@ -244,6 +244,12 @@ def plot_journal_style(comp_data, save_dir=None):
     # ------------------------------------------------------------------------
     NED_SIGN = np.array([1, -1, -1, 1, -1, -1])
 
+    # Per-axis actuator saturation bound tau_max,i -- identical to the MPC input
+    # bound u_max in params/control/.../ffpi_*_gain.yaml (same across all pool
+    # controllers). Order: [X, Y, Z (N), K, M, N (N*m)]. Normalizes the per-axis
+    # control effort  E_i = (1/N) * sum_k (tau_{i,k} / tau_max,i)^2  (dimensionless).
+    TAU_MAX = np.array([136.3905, 78.7474, 138.0776, 31.499, 46.0672, 12.8516])
+
     eta_ref = np.column_stack([get_arr(df_b, comp_data[base_ctrl]['tmap'], f'ref_pos_{x}') for x in ['x','y','z']] +
                               [get_arr_direct(df_b, f'ref_{a}') for a in ['roll','pitch','yaw']])
     eta_ref *= NED_SIGN
@@ -345,10 +351,14 @@ def plot_journal_style(comp_data, save_dir=None):
     labels_tau_t = [r'$K$ (N$\cdot$m)', r'$M$ (N$\cdot$m)', r'$N$ (N$\cdot$m)']
     tau_k_lin, tau_k_ang = ['x','y','z'], ['k','m','n']
 
+    metrics_effort = []
     for idx, ctrl in enumerate(labels):
         df, tmap = comp_data[ctrl]['df'], comp_data[ctrl]['tmap']
         tau = np.column_stack([get_arr(df, tmap, f'tau_{k}') for k in tau_k_lin] +
                               [get_arr(df, tmap, f'tau_{k}') for k in tau_k_ang]) * NED_SIGN
+        # Per-axis normalized control effort  E_i = (1/N) * sum_k (tau_{i,k}/tau_max,i)^2.
+        # NED_SIGN is immaterial here since tau is squared; tau_max,i > 0.
+        metrics_effort.append(np.mean((tau / TAU_MAX) ** 2, axis=0))
         for i in range(3):
             axs4[i, 0].plot(t, tau[:, i],   color=colors[idx], label=label_map[ctrl] if i==0 else "")
             axs4[i, 1].plot(t, tau[:, i+3], color=colors[idx])
@@ -492,15 +502,57 @@ def plot_journal_style(comp_data, save_dir=None):
                                 metrics_nu)
 
     # ========================================================================
+    # Fig 10: Per-axis normalized control effort (Paper Table 10, Eq. 66)
+    #   E_i = (1/N) * sum_k (tau_{i,k} / tau_max,i)^2      (dimensionless)
+    # Last column is the 6-DOF aggregate  sum_i E_i. Lowest per column is
+    # highlighted -- this marks least actuator usage and is NOT a performance
+    # ranking (E_i measures actuation usage, not energy consumption).
+    # ========================================================================
+    def create_effort_figure():
+        fig, ax = plt.subplots(figsize=(COL2, 2.2))
+        cols = ['$X$', '$Y$', '$Z$', '$K$', '$M$', '$N$', r'$\sum_i E_i$']
+        # Values are tiny (O(1e-3)); tabulate them in units of 1e-6.
+        rows = [np.append(e, e.sum()) * 1e6 for e in metrics_effort]
+        cell_text = [[f"{v:.3f}" for v in r] for r in rows]
+        tbl = ax.table(cellText=cell_text, rowLabels=short_labels, colLabels=cols,
+                       loc='center', cellLoc='center',
+                       rowColours=['#f2f2f2']*len(labels),
+                       colColours=['#ead1dc']*len(cols))
+        ax.set_title(r'Normalized control effort $E_i\ (\times 10^{-6})$',
+                     fontsize=7, pad=4)
+        highlight_color, highlight_text_color = '#fff2cc', '#d62728'
+        for col_idx in range(len(cols)):
+            col_vals = [r[col_idx] for r in rows]
+            best_cell = tbl[int(np.argmin(col_vals)) + 1, col_idx]
+            best_cell.set_facecolor(highlight_color)
+            best_cell.get_text().set_weight('bold')
+            best_cell.get_text().set_color(highlight_text_color)
+        tbl.scale(1, 1.6); tbl.set_fontsize(7)
+        ax.axis('off')
+        fig.tight_layout(rect=[0, 0, 1, 1.0])
+        return fig
+
+    fig10 = create_effort_figure()
+
+    # Console summary of the normalized control effort.
+    print("\n[*] Per-axis normalized control effort "
+          "E_i = mean_k (tau_i,k / tau_max,i)^2   [x 1e-6]")
+    effort_tbl = pd.DataFrame(
+        [np.append(e, e.sum()) * 1e6 for e in metrics_effort],
+        index=short_labels, columns=['X', 'Y', 'Z', 'K', 'M', 'N', 'sum'])
+    print(effort_tbl.to_string(float_format=lambda x: f"{x:.3f}"))
+
+    # ========================================================================
     # Export — PDF (vector, IEEE-preferred) at 300 dpi
     # ========================================================================
     if save_dir is not None:
         save_path = Path(save_dir)
         save_path.mkdir(parents=True, exist_ok=True)
-        figs  = [fig1, fig2, fig3, fig4, fig5, fig6, fig8, fig9]
+        figs  = [fig1, fig2, fig3, fig4, fig5, fig6, fig8, fig9, fig10]
         names = ["1_position_response", "2_velocity_response", "3_velocity_error",
                  "4_control_effort", "5_3d_path", "6_2d_path",
-                 "7_table_position_metrics", "8_table_velocity_metrics"]
+                 "7_table_position_metrics", "8_table_velocity_metrics",
+                 "9_table_control_effort"]
         for f, name in zip(figs, names):
             f.savefig(save_path / f"{name}.pdf", format='pdf',
                       bbox_inches='tight', pad_inches=0.05, dpi=300)
